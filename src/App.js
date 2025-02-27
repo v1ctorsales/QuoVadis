@@ -5,9 +5,10 @@ import Sidebar from './components/SideBar';
 import Home from './pages/Home';
 import Viagens from './pages/Viagens';
 import Pessoas from './pages/Pessoas';
+import ViagemDetails from './components/ViagemDetails'; // importe o componente de detalhes
+import ViagemOverview from './pages/ViagemOverview';
 import Logout from './pages/Logout';
-
-
+import { ToastContainer } from 'react-toastify';
 
 function Layout() {
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ function Layout() {
           <Route path="/" element={<Home />} />
           <Route path="/home" element={<Home />} />
           <Route path="/viagens" element={<Viagens />} />
+          <Route path="/viagem" element={<ViagemOverview />} />
           <Route path="/pessoas" element={<Pessoas />} />
           <Route path="/logout" element={<Logout />} />
         </Routes>
@@ -41,6 +43,7 @@ function Layout() {
 function App() {
   return (
     <Router>
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
       <Layout />
     </Router>
   );
