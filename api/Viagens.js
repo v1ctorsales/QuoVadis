@@ -21,21 +21,21 @@ export default async function handler(req, res) {
     // 🔹 Listar todas as viagens (com paginação)
     if (req.method === "GET" && action === "getAll") {
       console.log(`📥 Buscando viagens - Página: ${page}, Limite: ${limit}`);
-
+    
       const { data, error, count } = await supabase
         .from("viagens")
-        .select("id, viagem, data_ida, data_volta, transporte, hotel", { count: "exact" })
+        .select("id, viagem, data_ida, data_volta, transporte, hotel, preco_definido", { count: "exact" })
         .order("data_ida", { ascending: true })
         .range(offset, offset + parseInt(limit) - 1);
-
+    
       if (error) {
         console.error("❌ Erro ao buscar viagens:", error);
         return res.status(500).json({ error: "Erro ao buscar viagens no Supabase." });
       }
-
+    
       console.log("✅ Viagens recuperadas:", data);
       return res.status(200).json({ data, total: count });
-    }
+    }    
 
     // 🔹 Obter Viagem por ID (GET – getFromId ou getById)
     else if (req.method === "GET" && (action === "getFromId" || action === "getById")) {

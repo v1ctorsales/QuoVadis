@@ -23,7 +23,7 @@ const ViagemOverview = () => {
         sx={{ borderBottom: 1, borderColor: 'divider' }}
       >
         <Tab label="Passageiros" />
-        <Tab label="Detalhes" />
+        <Tab label="Editar Viagem" />
       </Tabs>
 
       <Box sx={{ mt: 2 }}>
