@@ -1,6 +1,5 @@
 {
   "homepage": ".",
-  "type": "module",
   "name": "quovadis",
   "version": "0.1.0",
   "private": true,
