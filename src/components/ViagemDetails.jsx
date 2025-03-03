@@ -144,23 +144,24 @@ function ViagemDetails() {
         destino: formData.destino,
         dataIda: formData.data_ida,
         dataVolta: formData.data_volta,
-        quantidade_pessoas: formData.quantidade_pessoas,
+        quantidade_pessoas: formData.quantidade_pessoas === "" ? null : parseInt(formData.quantidade_pessoas),
         transporte: transporteFinal,
-        valorTransporte: formData.valor_transporte,
+        valorTransporte: formData.valor_transporte === "" ? null : parseFloat(formData.valor_transporte),
         transportePorPessoa: formData.calculo_valor_transporte_por_pessoa,
         hospedagem: formData.hotel,
-        valorHospedagem: formData.valor_hotel,
+        valorHospedagem: formData.valor_hotel === "" ? null : parseFloat(formData.valor_hotel),
         hospedagemPorPessoa: formData.calculo_valor_hotel_por_pessoa,
         gastoPasseiosPorPessoa: formData.gastos_passeios_por_pessoa,
-        valorGastoPasseios: formData.gastos_passeios,
+        valorGastoPasseios: formData.gastos_passeios === "" ? null : parseFloat(formData.gastos_passeios),
         gastoAlimentacaoPorPessoa: formData.gastos_alimentacao_por_pessoa,
-        valorGastoAlimentacao: formData.gastos_alimentacao,
+        valorGastoAlimentacao: formData.gastos_alimentacao === "" ? null : parseFloat(formData.gastos_alimentacao),
         outrosGastosPorPessoa: formData.outros_gastos_por_pessoa,
-        valorOutrosGastos: formData.outros_gastos,
-        limite_parcelas: parseInt(formData.limite_parcelas),
-        preco_definido: parseFloat(formData.preco_definido),
+        valorOutrosGastos: formData.outros_gastos === "" ? null : parseFloat(formData.outros_gastos),
+        limite_parcelas: formData.limite_parcelas === "" ? null : parseInt(formData.limite_parcelas),
+        preco_definido: formData.preco_definido === "" ? null : parseFloat(formData.preco_definido),
         custo_por_pessoa: custoPorPessoa
       };
+      
       
       
       const response = await fetch('/api/Viagens.js?action=updateViagem', {

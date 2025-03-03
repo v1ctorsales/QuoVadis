@@ -200,44 +200,46 @@ const Pessoas = () => {
       ) : (
         <TableContainer component={Paper}>
           <Table>
-            <TableHead sx={{ bgcolor: "#505050"}}>
-              <TableRow>
-                <TableCell sx={{ color: "white"}}>Nome</TableCell>
-                <TableCell sx={{ color: "white"}}>Telefone</TableCell>
-                <TableCell sx={{ color: "white"}}>CPF</TableCell>
-                <TableCell sx={{ color: "white"}}>RG</TableCell>
-                <TableCell sx={{ color: "white"}}>Data de Nascimento</TableCell>
-                <TableCell sx={{ color: "white"}}>Ações</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {pessoas.map((pessoa) => (
-                <TableRow key={pessoa.id}>
-                  <TableCell sx={{ py: 1.5, px: 1 }}>{pessoa.nome}</TableCell>
-                  <TableCell sx={{ py: 1.5, px: 1 }}>{pessoa.telefone}</TableCell>
-                  <TableCell sx={{ py: 1.5, px: 1 }}>{pessoa.cpf}</TableCell>
-                  <TableCell sx={{ py: 1.5, px: 1 }}>{pessoa.rg}</TableCell>
-                  <TableCell sx={{ py: 1.5, px: 1 }}>{new Date(pessoa.nascimento).toLocaleDateString('pt-BR')}</TableCell>
-                  <TableCell sx={{ py: 1.5, px: 1 }}>
-                  <IconButton 
-                    color="primary" 
-                    onClick={() => handleEdit(pessoa.id)}
-                    sx={{ bgcolor: 'primary.main', color: 'white', borderRadius: 1, mx: 0.5, width: 32, height: 32 }}
-                  >
-                    <Edit fontSize="small" />
-                  </IconButton>
+          <TableHead sx={{ bgcolor: "#505050" }}>
+  <TableRow>
+    <TableCell align="center" sx={{ color: "white" }}>Nome</TableCell>
+    <TableCell align="center" sx={{ color: "white" }}>Telefone</TableCell>
+    <TableCell align="center" sx={{ color: "white" }}>CPF</TableCell>
+    <TableCell align="center" sx={{ color: "white" }}>RG</TableCell>
+    <TableCell align="center" sx={{ color: "white" }}>Data de Nascimento</TableCell>
+    <TableCell align="center" sx={{ color: "white" }}>Ações</TableCell>
+  </TableRow>
+</TableHead>
 
-                  <IconButton 
-                    onClick={() => handleDelete(pessoa.id)}
-                    sx={{ bgcolor: 'red', color: 'white', borderRadius: 1, mx: 0.5, width: 32, height: 32 }}
-                  >
-                    <Delete fontSize="small" />
-                  </IconButton>
+<TableBody>
+  {pessoas.map((pessoa) => (
+    <TableRow key={pessoa.id}>
+      <TableCell align="center" sx={{ py: 1.5, px: 1 }}>{pessoa.nome}</TableCell>
+      <TableCell align="center" sx={{ py: 1.5, px: 1 }}>{pessoa.telefone}</TableCell>
+      <TableCell align="center" sx={{ py: 1.5, px: 1 }}>{pessoa.cpf}</TableCell>
+      <TableCell align="center" sx={{ py: 1.5, px: 1 }}>{pessoa.rg}</TableCell>
+      <TableCell align="center" sx={{ py: 1.5, px: 1 }}>
+        {new Date(pessoa.nascimento + 'T00:00:00').toLocaleDateString('pt-BR')}
+      </TableCell>
+      <TableCell align="center" sx={{ py: 1.5, px: 1 }}>
+        <IconButton 
+          color="primary" 
+          onClick={() => handleEdit(pessoa.id)}
+          sx={{ bgcolor: 'primary.main', color: 'white', borderRadius: 1, mx: 0.5, width: 32, height: 32 }}
+        >
+          <Edit fontSize="small" />
+        </IconButton>
+        <IconButton 
+          onClick={() => handleDelete(pessoa.id)}
+          sx={{ bgcolor: 'red', color: 'white', borderRadius: 1, mx: 0.5, width: 32, height: 32 }}
+        >
+          <Delete fontSize="small" />
+        </IconButton>
+      </TableCell>
+    </TableRow>
+  ))}
+</TableBody>
 
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
           </Table>
         </TableContainer>
       )}

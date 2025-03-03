@@ -102,7 +102,7 @@ const PaymentStatusModal = ({
     // Seleciona todas as parcelas em atraso
     const overdueInstallments = installments.filter(inst => inst.status === "Atrasado");
     if (overdueInstallments.length === 0) return;
-    const phoneWithCountry = `55${telefone}`;
+    const phoneWithCountry = `5531${telefone}`;
     let message = "";
     if (overdueInstallments.length === 1) {
       message = `Olá, ${nome}, verificamos que você não efetuou o pagamento da ${overdueInstallments[0].number}ª parcela referente à viagem para ${nomeViagem}.\n\nSegue abaixo os dados para pagamento:\n\nChave PIX (CNPJ): 590356320001-33\nValor: ${valorParcelaCalculado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}\n\nAtenciosamente, Quovadis (Gilda e Ricardo)`;
