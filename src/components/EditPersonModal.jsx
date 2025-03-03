@@ -103,10 +103,11 @@ const EditPersonModal = ({ open, handleClose, person, isNew }) => {
   };
   
   
-  const validateCPF = (cpf) => {
-    const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
-    return cpfRegex.test(cpf);
+  const validateRG = (rg) => {
+    const rgRegex = /^[-A-Za-z0-9.]{6,15}$/;
+    return rgRegex.test(rg);
   };
+  
   
   const validateRG = (rg) => {
     const rgRegex = /^\d{8,14}$/;
