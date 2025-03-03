@@ -12,7 +12,8 @@ import {
   IconButton,
   Button,
   Link,
-  CircularProgress
+  CircularProgress,
+  TextField
 } from '@mui/material';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
@@ -30,7 +31,7 @@ const ViagemPassageiros = ({ viagemId }) => {
   const { passageiros, setPassageiros, updatePassageiro, removePassageiro } = usePassageirosStore();
 
   const [rawPassageiros, setRawPassageiros] = useState(null);
-  const [loadingPassageiros, setLoadingPassageiros] = useState(false); // <--- NOVO estado de loading
+  const [loadingPassageiros, setLoadingPassageiros] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedPassageiro, setSelectedPassageiro] = useState(null);
   const [valorViagem, setValorViagem] = useState(0);
@@ -40,28 +41,12 @@ const ViagemPassageiros = ({ viagemId }) => {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [passageiroToDelete, setPassageiroToDelete] = useState(null);
 
-  const didFetchViagem = useRef(false);
-  const didFetchPassageiros = useRef(false);
-
-  // Recarregar passageiros do backend
-  const refetchPassengers = () => {
-    setLoadingPassageiros(true); // Inicia o loading antes do fetch
-    fetch(`/api/Passageiros.js?action=getByViagemId&id=${viagemId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.data) {
-          setRawPassageiros(data.data);
-        } else {
-          setRawPassageiros([]);
-        }
-      })
-      .catch((error) => {
-        console.error("Erro ao refetch passageiros da viagem:", error);
-      })
-      .finally(() => {
-        setLoadingPassageiros(false); // Fim do loading
-      });
-  };
+  // Estados para busca e paginação
+  const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 10; // número de registros por página
+  const [searchTimeout, setSearchTimeout] = useState(null);
 
   const computeStatus = (parcelas, parcelasPagas, mesInicioPagamento) => {
     if (parcelasPagas >= parcelas) return "Viagem Paga";
@@ -80,9 +65,6 @@ const ViagemPassageiros = ({ viagemId }) => {
   // Buscar detalhes da viagem
   useEffect(() => {
     if (!viagemId) return;
-    if (didFetchViagem.current) return;
-    didFetchViagem.current = true;
-
     fetch(`/api/Viagens.js?action=getById&id=${viagemId}`)
       .then((res) => res.json())
       .then((data) => {
@@ -97,48 +79,81 @@ const ViagemPassageiros = ({ viagemId }) => {
       });
   }, [viagemId]);
 
-  // Buscar passageiros da viagem (uma vez)
-  useEffect(() => {
-    if (!viagemId) return;
-    if (didFetchPassageiros.current) return;
-    didFetchPassageiros.current = true;
+  // Função unificada para buscar passageiros com busca e paginação
+  const fetchPassengers = async (query = "", pageNumber = 1) => {
+    setLoadingPassageiros(true);
+    let url = "";
+    if (query.length >= 3) {
+      url = `/api/Passageiros.js?action=getSearch&query=${encodeURIComponent(query)}&viagemId=${viagemId}&page=${pageNumber}&limit=${limit}`;
+    } else {
+      url = `/api/Passageiros.js?action=getByViagemId&id=${viagemId}&page=${pageNumber}&limit=${limit}`;
+    }
+    try {
+      const response = await fetch(url);
+      const result = await response.json();
+      if (result.data) {
+        setRawPassageiros(result.data);
+        setTotal(result.total || result.data.length);
+      } else {
+        setRawPassageiros([]);
+        setTotal(0);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar passageiros:", error);
+    } finally {
+      setLoadingPassageiros(false);
+    }
+  };
 
-    setLoadingPassageiros(true); // <--- Ativa o loading antes de iniciar o fetch
-    fetch(`/api/Passageiros.js?action=getByViagemId&id=${viagemId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.data) {
-          setRawPassageiros(data.data);
-        } else {
-          setRawPassageiros([]);
-        }
-      })
-      .catch((error) => {
-        console.error("Erro ao buscar passageiros da viagem:", error);
-      })
-      .finally(() => {
-        setLoadingPassageiros(false); // <--- Desativa o loading ao finalizar
-      });
+  // Buscar passageiros ao montar ou quando o ID da viagem mudar
+  useEffect(() => {
+    if (viagemId) {
+      setPage(1);
+      fetchPassengers(searchQuery, 1);
+    }
   }, [viagemId]);
+
+  // Buscar novamente quando a página mudar
+  useEffect(() => {
+    if (viagemId) {
+      fetchPassengers(searchQuery, page);
+    }
+  }, [page]);
 
   // Processar dados e atualizar a store
   useEffect(() => {
     if (!rawPassageiros) return;
-    const processed = rawPassageiros.map((item) => ({
-      id: item.id,
-      nome: item.pessoa?.nome || "Sem Nome",
-      cpf: item.pessoa?.cpf,
-      rg: item.pessoa?.rg,
-      telefone: item.pessoa?.telefone || "",
-      nascimento: item.pessoa?.nascimento,
-      parcelas: item.parcelas,
-      parcelasPagas: item.parcelas_pagas,
-      mesInicioPagamento: item.mes_inicio_pagamento,
-      valorViagem: valorViagem,
-      statusPagamento: computeStatus(item.parcelas, item.parcelas_pagas, item.mes_inicio_pagamento)
-    }));
-    setPassageiros(processed, processed.length);
-  }, [rawPassageiros, valorViagem, setPassageiros]);
+    const processed = rawPassageiros.map((item) => {
+      // Valor padrão do status e do display das parcelas pagas
+      let statusPagamento = computeStatus(item.parcelas, item.parcelas_pagas, item.mes_inicio_pagamento);
+      let parcelasPagasDisplay = `${item.parcelas_pagas}/${item.parcelas}`;
+      let isPaymentDisabled = false;
+      
+      // Se a propriedade nao_paga for true, modifica os valores:
+      if (item.pessoa && item.pessoa.nao_paga) {
+        statusPagamento = "Viagem Paga";
+        parcelasPagasDisplay = "-";
+        isPaymentDisabled = true;
+      }
+      
+      return {
+        id: item.id,
+        nome: item.pessoa?.nome || "Sem Nome",
+        cpf: item.pessoa?.cpf,
+        rg: item.pessoa?.rg,
+        telefone: item.pessoa?.telefone || "",
+        nascimento: item.pessoa?.nascimento,
+        parcelas: item.parcelas,
+        parcelasPagas: parcelasPagasDisplay,
+        mesInicioPagamento: item.mes_inicio_pagamento,
+        valorViagem: valorViagem,
+        statusPagamento: statusPagamento,
+        isPaymentDisabled: isPaymentDisabled // propriedade para controlar se o botão deve ser desabilitado
+      };
+    });
+    setPassageiros(processed, total);
+  }, [rawPassageiros, valorViagem, setPassageiros, total]);
+  
 
   const handleOpenModal = (passageiro) => {
     setSelectedPassageiro(passageiro);
@@ -180,6 +195,8 @@ const ViagemPassageiros = ({ viagemId }) => {
         removePassageiro(passageiroToDelete.id);
         setDeleteLoading(false);
         setDeleteModalOpen(false);
+        // Após a exclusão, refaz a busca mantendo a página e query atuais
+        fetchPassengers(searchQuery, page);
       })
       .catch(err => {
         console.error("[ViagemPassageiros] Erro ao excluir passageiro:", err);
@@ -188,9 +205,9 @@ const ViagemPassageiros = ({ viagemId }) => {
       });
   };
 
-  // Ao inserir um novo passageiro, refetch do backend para dados oficiais
+  // Refazer busca ao inserir novo passageiro
   const handleAddNewPassageiro = () => {
-    refetchPassengers();
+    fetchPassengers(searchQuery, page);
   };
 
   const handleAddPassenger = () => {
@@ -201,14 +218,32 @@ const ViagemPassageiros = ({ viagemId }) => {
     window.open(`/api/Passageiros.js?action=PrintListaPassageiros&id=${viagemId}`, '_blank');
   };
 
+  const handlePageChange = (newPage) => {
+    if (newPage < 1 || newPage > Math.ceil(total / limit)) return;
+    setPage(newPage);
+  };
+
   return (
     <Box sx={{ p: 2 }}>
-      {/* Cabeçalho com título, link de impressão e botão de adicionar */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Typography variant="h6" sx={{ color: '#505050' }}>
-            Passageiros
-          </Typography>
+      {/* Cabeçalho com título, busca, link de impressão e botão de adicionar */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap' }}>
+        <Box sx={{ flexGrow: 1, mr: 2, mb: { xs: 1, sm: 0 } }}>
+          <TextField
+            label="Pesquisar por nome do passageiro"
+            variant="outlined"
+            fullWidth
+            value={searchQuery}
+            onChange={(e) => {
+              const value = e.target.value.trim();
+              setSearchQuery(value);
+              if (searchTimeout) clearTimeout(searchTimeout);
+              const timeout = setTimeout(() => {
+                setPage(1);
+                fetchPassengers(value, 1);
+              }, 500);
+              setSearchTimeout(timeout);
+            }}
+          />
         </Box>
         <Link 
           component="button"
@@ -217,7 +252,7 @@ const ViagemPassageiros = ({ viagemId }) => {
           onClick={handlePrint}
           sx={{ mr: 2, color: '#505050' }}
         >
-          <PrintIcon sx={{ mr: 0.5 }} /> Imprimir lista de passageiros
+          <PrintIcon sx={{ mr: 0.5 }} />
         </Link>
         <Button variant="contained" color="primary" onClick={handleAddPassenger}>
           <Add sx={{ mr: 1 }} /> Adicionar Passageiro
@@ -239,7 +274,6 @@ const ViagemPassageiros = ({ viagemId }) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {/* Se ainda estiver carregando passageiros, exibe um spinner */}
             {loadingPassageiros ? (
               <TableRow>
                 <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
@@ -262,53 +296,81 @@ const ViagemPassageiros = ({ viagemId }) => {
                 const telefoneValido = passageiro.telefone || "Telefone não informado";
                 return (
                   <TableRow key={passageiro.id}>
-                    <TableCell align="center">{passageiro.nome}</TableCell>
-                    <TableCell align="center">{cpfValido}</TableCell>
-                    <TableCell align="center">{rgValido}</TableCell>
-                    <TableCell align="center">{telefoneValido}</TableCell>
-                    <TableCell align="center">{dataNascimento}</TableCell>
-                    <TableCell align="center">{`${passageiro.parcelasPagas}/${passageiro.parcelas}`}</TableCell>
-                    <TableCell align="center">
-                      {passageiro.statusPagamento === "Atrasado" && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'red' }}>
-                          <ErrorOutlineIcon sx={{ mr: 1 }} /> Atrasado
-                        </Box>
-                      )}
-                      {passageiro.statusPagamento === "Em dia" && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'green' }}>
-                          <CheckCircleIcon sx={{ mr: 1 }} /> Em dia
-                        </Box>
-                      )}
-                      {passageiro.statusPagamento === "Viagem Paga" && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'primary.main' }}>
-                          <StarIcon sx={{ mr: 1 }} /> Viagem Paga
-                        </Box>
-                      )}
-                    </TableCell>
-                    <TableCell align="center">
-                      <IconButton
-                        color="primary"
-                        aria-label="editar"
-                        onClick={() => handleOpenModal(passageiro)}
-                      >
-                        <MonetizationOnIcon />
-                      </IconButton>
-                      <IconButton
-                        color="error"
-                        aria-label="excluir"
-                        onClick={() => handleOpenDeleteModal(passageiro)}
-                        sx={{ borderRadius: 1, mx: 0.5, width: 32, height: 32 }}
-                      >
-                        <RemoveCircleOutlineIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
+  <TableCell align="center">{passageiro.nome}</TableCell>
+  <TableCell align="center">{cpfValido}</TableCell>
+  <TableCell align="center">{rgValido}</TableCell>
+  <TableCell align="center">{telefoneValido}</TableCell>
+  <TableCell align="center">{dataNascimento}</TableCell>
+  {/* Exibe o valor processado (que já é "-" se nao_paga for true) */}
+  <TableCell align="center">{passageiro.parcelasPagas}</TableCell>
+  <TableCell align="center">
+    {passageiro.statusPagamento === "Atrasado" && (
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'red' }}>
+        <ErrorOutlineIcon sx={{ mr: 1 }} /> Atrasado
+      </Box>
+    )}
+    {passageiro.statusPagamento === "Em dia" && (
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'green' }}>
+        <CheckCircleIcon sx={{ mr: 1 }} /> Em dia
+      </Box>
+    )}
+    {passageiro.statusPagamento === "Viagem Paga" && (
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'primary.main' }}>
+        <StarIcon sx={{ mr: 1 }} /> Viagem Paga
+      </Box>
+    )}
+  </TableCell>
+  <TableCell align="center">
+    <IconButton
+      color="primary"
+      aria-label="editar"
+      onClick={() => handleOpenModal(passageiro)}
+      disabled={passageiro.isPaymentDisabled}  // desabilita se nao_paga for true
+    >
+      <MonetizationOnIcon />
+    </IconButton>
+    <IconButton
+      color="error"
+      aria-label="excluir"
+      onClick={() => handleOpenDeleteModal(passageiro)}
+      sx={{ borderRadius: 1, mx: 0.5, width: 32, height: 32 }}
+    >
+      <RemoveCircleOutlineIcon />
+    </IconButton>
+  </TableCell>
+</TableRow>
+
                 );
               })
             )}
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Paginação */}
+      {!loadingPassageiros && passageiros.length > 0 && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+          <Button 
+            variant="contained" 
+            sx={{ bgcolor: "#505050" }}
+            disabled={page === 1} 
+            onClick={() => handlePageChange(page - 1)}
+          >
+            Anterior
+          </Button>
+          <Typography sx={{ mx: 2 }}>
+            Página {page} de {Math.ceil(total / limit)}
+          </Typography>
+          <Button 
+            variant="contained" 
+            sx={{ bgcolor: "#505050" }}
+            disabled={page >= Math.ceil(total / limit)} 
+            onClick={() => handlePageChange(page + 1)}
+          >
+            Próxima
+          </Button>
+        </Box>
+      )}
 
       {selectedPassageiro && (
         <PaymentStatusModal

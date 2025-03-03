@@ -15,18 +15,18 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Configuração do Supabase ausente." });
   }
 
-  const { action, id, page = 1, limit = 10, query } = req.query;
+  const { action, id, page = 1, limit = 10, query, viagemId } = req.query;
   const offset = (parseInt(page) - 1) * parseInt(limit);
 
   try {
-    // 🔹 Listar passageiros da viagem
+    // 🔹 Listar passageiros da viagem com paginação (getByViagemId)
     if (req.method === "GET" && action === "getByViagemId") {
       if (!id) {
         return res.status(400).json({ error: "ID da viagem é obrigatório." });
       }
-      console.log(`📥 Buscando passageiros relacionados à viagem ID: ${id}...`);
+      console.log(`📥 Buscando passageiros relacionados à viagem ID: ${id} - Página: ${page}, Limite: ${limit}...`);
 
-      const { data, error } = await supabase
+      const { data, error, count } = await supabase
         .from("pessoas_viagens")
         .select(`
           id,
@@ -35,9 +35,10 @@ export default async function handler(req, res) {
           mes_inicio_pagamento,
           idPessoa,
           idViagem,
-          pessoa: idPessoa (id, nome, cpf, rg, telefone, nascimento)
-        `)
-        .eq("idViagem", id);
+          pessoa: idPessoa (id, nome, cpf, rg, telefone, nascimento, nao_paga)
+        `, { count: "exact" })
+        .eq("idViagem", id)
+        .range(offset, offset + parseInt(limit) - 1);
 
       if (error) {
         console.error("❌ Erro ao buscar passageiros:", error);
@@ -58,10 +59,51 @@ export default async function handler(req, res) {
 
       console.log("✅ Passageiros encontrados:", data);
       return res.status(200).json({ 
-        data,
+        data, 
+        total: count, 
         preco_definido: viagemData ? viagemData.preco_definido : null 
       });
     }
+
+    // 🔹 Buscar passageiros por nome (getSearch) com paginação
+    else if (req.method === "GET" && action === "getSearch") {
+      if (!viagemId) {
+        return res.status(400).json({ error: "ID da viagem é obrigatório para busca." });
+      }
+    
+      console.log(`📥 Buscando passageiros da viagem ID: ${viagemId} com busca "${query}" - Página: ${page}, Limite: ${limit}...`);
+    
+      const { data, error, count } = await supabase
+        .from("pessoas_viagens")
+        .select(`
+          id,
+          parcelas,
+          parcelas_pagas,
+          mes_inicio_pagamento,
+          idPessoa,
+          idViagem,
+          pessoa: pessoas!inner (
+            id,
+            nome,
+            cpf,
+            rg,
+            telefone,
+            nascimento
+          )
+        `, { count: "exact" })
+        .eq("idViagem", viagemId)
+        .ilike("pessoas.nome", `%${query}%`)
+        .range(offset, offset + parseInt(limit) - 1);
+    
+      if (error) {
+        console.error("❌ Erro ao buscar passageiros com busca:", error);
+        return res.status(500).json({ error: "Erro ao buscar passageiros no Supabase." });
+      }
+    
+      console.log("✅ Passageiros encontrados:", data);
+      return res.status(200).json({ data, total: count });
+    }
+    
 
     // 🔹 Criar Passageiro (POST)
     else if (req.method === "POST" && action === "createPassageiro") {
@@ -235,15 +277,10 @@ export default async function handler(req, res) {
       const totalTableWidth = colWidths.reduce((acc, cw) => acc + cw, 0);
 
       // 8. Desenhar o cabeçalho
-      //   - desenhar retângulos para cada coluna
       let currentX = startX;
-      // Linha do cabeçalho
       drawCell(startX, tableTop, totalTableWidth, rowHeight);
-
       colTitles.forEach((title, i) => {
-        // Desenha célula do header
         drawCell(currentX, tableTop, colWidths[i], rowHeight);
-        // Escreve o texto do cabeçalho
         doc.fontSize(10)
           .text(title, currentX + 5, tableTop + 5, {
             width: colWidths[i] - 10,
@@ -251,8 +288,6 @@ export default async function handler(req, res) {
           });
         currentX += colWidths[i];
       });
-
-      // Move para a próxima linha
       tableTop += rowHeight;
 
       // 9. Preencher as linhas da tabela
@@ -268,12 +303,9 @@ export default async function handler(req, res) {
             : "N/A"
         ];
 
-        // Desenha a linha (retângulo) que engloba todas as colunas
         drawCell(startX, tableTop, totalTableWidth, rowHeight);
-
         let colX = startX;
         rowData.forEach((cellText, idx) => {
-          // Desenha cada célula
           drawCell(colX, tableTop, colWidths[idx], rowHeight);
           doc.fontSize(10)
             .text(cellText, colX + 5, tableTop + 5, {
@@ -282,11 +314,9 @@ export default async function handler(req, res) {
             });
           colX += colWidths[idx];
         });
-
         tableTop += rowHeight;
       });
 
-      // 10. Finaliza o PDF
       doc.end();
     }
 

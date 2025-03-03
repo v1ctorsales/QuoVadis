@@ -55,7 +55,7 @@ const EditViagemModal = ({ open, handleClose, viagem, isNew, onSave }) => {
   const [loading, setLoading] = React.useState(false);
   const { addViagem, updateViagem } = useViagensStore();
   
-  // Atualize o Stepper para incluir a nova etapa "Precificação"
+  // Definindo as etapas do Stepper
   const steps = [
     "Informações Principais", 
     "Transporte e Hospedagem", 
@@ -63,6 +63,13 @@ const EditViagemModal = ({ open, handleClose, viagem, isNew, onSave }) => {
     "Precificação"
   ];
   const [activeStep, setActiveStep] = React.useState(0);
+
+  // Sempre que o modal for aberto, resetar a etapa para a 1 (activeStep = 0)
+  React.useEffect(() => {
+    if (open) {
+      setActiveStep(0);
+    }
+  }, [open]);
 
   React.useEffect(() => {
     if (viagem && Object.keys(viagem).length > 0) {
@@ -133,7 +140,7 @@ const EditViagemModal = ({ open, handleClose, viagem, isNew, onSave }) => {
   const calculateGastoPorPessoa = () => {
     const qtd = parseFloat(formData.quantidade_pessoas) || 1;
     let transporte = parseFloat(formData.valorTransporte) || 0;
-    let hospedagem = parseFloat(formData.valorHospedagem) || 0;
+    let hospedagem = parseFloat(formData.hospedagem) || 0;
     let passeios = parseFloat(formData.valorGastoPasseios) || 0;
     let alimentacao = parseFloat(formData.valorGastoAlimentacao) || 0;
     let outros = parseFloat(formData.valorOutrosGastos) || 0;
@@ -162,17 +169,20 @@ const EditViagemModal = ({ open, handleClose, viagem, isNew, onSave }) => {
   const handleSubmit = async () => {
     if (loading) return;
     setLoading(true);
-    // Constrói o objeto a ser enviado
+    
+    // Extraindo os campos que não fazem parte da lógica
     const { transporteOption, transporteCustom, ...rest } = formData;
     const transporte = transporteOption === "outros" ? transporteCustom : transporteOption;
-    const dataToSend = { ...rest, transporte };
-
+    const dataToSend = { ...rest, transporte, custo_por_pessoa: gastoPorPessoa };
+  
+    console.log("Payload enviado:", dataToSend);
+  
     try {
       const endpoint = isNew 
         ? '/api/Viagens.js?action=createViagem' 
         : '/api/Viagens.js?action=updateViagem';
       const method = isNew ? 'POST' : 'PUT';
-
+  
       const response = await fetch(endpoint, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -197,10 +207,9 @@ const EditViagemModal = ({ open, handleClose, viagem, isNew, onSave }) => {
       setLoading(false);
     }
   };
-
+  
   const handleNext = () => {
     if (activeStep === 0) {
-      // Validação da etapa "Informações Principais"
       if (!formData.destino.trim()) {
         toast.error("O destino é obrigatório.");
         return;
@@ -213,13 +222,11 @@ const EditViagemModal = ({ open, handleClose, viagem, isNew, onSave }) => {
         toast.error("A data de volta é obrigatória.");
         return;
       }
-      // (Opcional) Validação de datas pode ser incluída aqui.
       if (!formData.quantidade_pessoas) {
         toast.error("A quantidade de pessoas é obrigatória.");
         return;
       }
     } else if (activeStep === 1) {
-      // Validação da etapa "Transporte e Hospedagem"
       if (!formData.transporteOption) {
         toast.error("O meio de transporte é obrigatório.");
         return;
@@ -548,12 +555,12 @@ const EditViagemModal = ({ open, handleClose, viagem, isNew, onSave }) => {
               * Gasto por pessoa: {gastoPorPessoa}
             </Typography>
             <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>
-              * Preço recomendado: {gastoPorPessoa * 1.2}
+              * Preço recomendado: {(gastoPorPessoa * 1.3).toFixed(2)}
             </Typography>
             <TextField
               fullWidth
               label="Preço Por Pessoa"
-              name="preco_sugerido"
+              name="preco_sugerido" 
               type="number"
               value={formData.preco_sugerido}
               onChange={handleChange}

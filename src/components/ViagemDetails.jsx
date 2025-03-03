@@ -130,17 +130,25 @@ function ViagemDetails() {
 
   const gastoPorPessoa = calculateGastoPorPessoa();
 
+
+
   const handleSave = async () => {
     setSaving(true);
     try {
       const transporteFinal = formData.transporte === "outros" ? formData.transporteCustom : formData.transporte;
+      // Calcular o custo por pessoa (gastoPorPessoa já deve ser calculado corretamente)
+      const custoPorPessoa = parseFloat(gastoPorPessoa) || 0;
+      
       const payload = { 
         id, 
         ...formData, 
         viagem: formData.destino, 
         transporte: transporteFinal,
-        limite_parcelas: parseInt(formData.limite_parcelas)  // converte para inteiro
+        limite_parcelas: parseInt(formData.limite_parcelas),
+        preco_definido: parseFloat(formData.preco_definido), // Se esse campo existir
+        custo_por_pessoa: custoPorPessoa  // Inclua o valor calculado aqui
       };
+      
       const response = await fetch('/api/Viagens.js?action=updateViagem', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -158,6 +166,9 @@ function ViagemDetails() {
       setSaving(false);
     }
   };
+  
+
+  
   
 
   if (loading) {
@@ -397,17 +408,17 @@ function ViagemDetails() {
           * Gasto por pessoa: {gastoPorPessoa}
         </Typography>
         <Typography variant="caption" sx={{ display: 'block', mb: 3 }}>
-          * Preço recomendado: {gastoPorPessoa.toFixed(2) * 1.2}
+          * Preço recomendado: {gastoPorPessoa.toFixed(2) * 1.3}
         </Typography>
         <TextField
-  fullWidth
-  name="preco_definido"
-  label="Preço Por Pessoa"
-  type="number"
-  value={formData.preco_definido}
-  onChange={handleChange}
-  sx={{ mb: 2 }}
-/>
+        fullWidth
+        name="preco_definido"
+        label="Preço Por Pessoa"
+        type="number"
+        value={formData.preco_definido}
+        onChange={handleChange}
+        sx={{ mb: 2 }}
+      />
 
         <TextField
           select

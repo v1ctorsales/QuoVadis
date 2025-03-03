@@ -37,7 +37,7 @@ const Sidebar = ({ onNavigate, selectedPage }) => (
     </Toolbar>
     <List sx={{ width: '100%', mt: 5 }}>
       {[
-        { text: 'Home', icon: <Home />, page: 'home' },
+        { text: 'Início', icon: <Home />, page: 'home' },
         { text: 'Viagens', icon: <Flight />, page: 'viagens' },
         { text: 'Pessoas', icon: <Person />, page: 'pessoas' },
         { text: 'Logout', icon: <ExitToApp />, page: 'logout' },

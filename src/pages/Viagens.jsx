@@ -134,6 +134,13 @@ const Viagens = () => {
     setConfirmDeleteOpen(true);
   };
 
+  const convertUTCDateToLocalDate = (dateStr) => {
+    const date = new Date(dateStr);
+    // Adiciona o offset do fuso horário para neutralizar a conversão automática
+    date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+    return date;
+  };
+
   const confirmDelete = async () => {
     if (!viagemToDelete) return;
     setDeleting(true);
@@ -227,10 +234,11 @@ const Viagens = () => {
     <TableRow key={viagem.id}>
       <TableCell sx={{ py: 1, px: 3 }}>{viagem.viagem}</TableCell>
       <TableCell sx={{ py: 1, px: 3 }}>
-        {new Date(viagem.data_ida).toLocaleDateString('pt-BR')}
-        <ArrowRightAltIcon sx={{ verticalAlign: 'middle', mx: 1 }} />
-        {new Date(viagem.data_volta).toLocaleDateString('pt-BR')}
-      </TableCell>
+  {convertUTCDateToLocalDate(viagem.data_ida).toLocaleDateString('pt-BR')}
+  <ArrowRightAltIcon sx={{ verticalAlign: 'middle', mx: 1 }} />
+  {convertUTCDateToLocalDate(viagem.data_volta).toLocaleDateString('pt-BR')}
+</TableCell>
+
       <TableCell sx={{ py: 1, px: 3, textAlign: "center" }}>
         {viagem.transporte === 'ônibus' ? (
           <DirectionsBusIcon />
