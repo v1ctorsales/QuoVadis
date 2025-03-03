@@ -139,30 +139,35 @@ const EditViagemModal = ({ open, handleClose, viagem, isNew, onSave }) => {
   // Função para calcular o gasto por pessoa na etapa de Precificação
   const calculateGastoPorPessoa = () => {
     const qtd = parseFloat(formData.quantidade_pessoas) || 1;
-    let transporte = parseFloat(formData.valorTransporte) || 0;
-    let hospedagem = parseFloat(formData.hospedagem) || 0;
-    let passeios = parseFloat(formData.valorGastoPasseios) || 0;
-    let alimentacao = parseFloat(formData.valorGastoAlimentacao) || 0;
-    let outros = parseFloat(formData.valorOutrosGastos) || 0;
+  
+    const transporte = parseFloat(formData.valorTransporte) || 0;
+    const hospedagem = parseFloat(formData.valorHospedagem) || 0;
+    const passeios = parseFloat(formData.valorGastoPasseios) || 0;
+    const alimentacao = parseFloat(formData.valorGastoAlimentacao) || 0;
+    const outros = parseFloat(formData.valorOutrosGastos) || 0;
     
-    if (!formData.transportePorPessoa && qtd > 0) {
-      transporte = transporte / qtd;
-    }
-    if (!formData.hospedagemPorPessoa && qtd > 0) {
-      hospedagem = hospedagem / qtd;
-    }
-    if (!formData.gastoPasseiosPorPessoa && qtd > 0) {
-      passeios = passeios / qtd;
-    }
-    if (!formData.gastoAlimentacaoPorPessoa && qtd > 0) {
-      alimentacao = alimentacao / qtd;
-    }
-    if (!formData.outrosGastosPorPessoa && qtd > 0) {
-      outros = outros / qtd;
-    }
+    // Se o custo informado não for já por pessoa, dividir pelo número de pessoas
+    const valorTransporte = formData.transportePorPessoa ? transporte : (qtd > 0 ? transporte / qtd : transporte);
+    const valorHospedagem = formData.hospedagemPorPessoa ? hospedagem : (qtd > 0 ? hospedagem / qtd : hospedagem);
+    const valorPasseios = formData.gastoPasseiosPorPessoa ? passeios : (qtd > 0 ? passeios / qtd : passeios);
+    const valorAlimentacao = formData.gastoAlimentacaoPorPessoa ? alimentacao : (qtd > 0 ? alimentacao / qtd : alimentacao);
+    const valorOutros = formData.outrosGastosPorPessoa ? outros : (qtd > 0 ? outros / qtd : outros);
     
-    return transporte + hospedagem + passeios + alimentacao + outros;
+    // Logs para depuração
+    console.log("======= Cálculo de Gasto por Pessoa =======");
+    console.log("Quantidade de Pessoas:", qtd);
+    console.log("Transporte:", transporte, " | Por Pessoa?", formData.transportePorPessoa, " | Final:", valorTransporte);
+    console.log("Hospedagem:", hospedagem, " | Por Pessoa?", formData.hospedagemPorPessoa, " | Final:", valorHospedagem);
+    console.log("Passeios:", passeios, " | Por Pessoa?", formData.gastoPasseiosPorPessoa, " | Final:", valorPasseios);
+    console.log("Alimentação:", alimentacao, " | Por Pessoa?", formData.gastoAlimentacaoPorPessoa, " | Final:", valorAlimentacao);
+    console.log("Outros:", outros, " | Por Pessoa?", formData.outrosGastosPorPessoa, " | Final:", valorOutros);
+    console.log("============================================");
+  
+    return valorTransporte + valorHospedagem + valorPasseios + valorAlimentacao + valorOutros;
   };
+  
+  
+  
 
   const gastoPorPessoa = calculateGastoPorPessoa();
 
@@ -552,7 +557,7 @@ const EditViagemModal = ({ open, handleClose, viagem, isNew, onSave }) => {
         {activeStep === 3 && (
           <Box>
             <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>
-              * Gasto por pessoa: {gastoPorPessoa}
+              * Gasto por pessoaa: {gastoPorPessoa}
             </Typography>
             <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>
               * Preço recomendado: {(gastoPorPessoa * 1.3).toFixed(2)}
