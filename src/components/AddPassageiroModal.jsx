@@ -57,7 +57,7 @@ const AddPassageiroModal = ({ open, onClose, onAdd, viagemId: propViagemId }) =>
       return;
     }
     setLoadingSearch(true);
-    fetch(`/api/Pessoas?action=getSearch&query=${encodeURIComponent(searchQuery)}&page=1&limit=10`)
+    fetch(`/api/Pessoas.js?action=getSearch&query=${encodeURIComponent(searchQuery)}&page=1&limit=10`)
       .then(res => res.json())
       .then(data => {
         if (data.data) {
@@ -90,7 +90,7 @@ const AddPassageiroModal = ({ open, onClose, onAdd, viagemId: propViagemId }) =>
     };
   
     setSaving(true);
-    fetch('/api/Passageiros?action=createPassageiro', {
+    fetch('/api/Passageiros.js?action=createPassageiro', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)

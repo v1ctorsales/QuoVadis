@@ -23,7 +23,7 @@ const Home = () => {
   const [ultimasViagens, setUltimasViagens] = useState([]);
 
   useEffect(() => {
-    fetch('/api/Inicio?action=getInicio')
+    fetch('/api/Inicio.js?action=getInicio')
       .then((res) => res.json())
       .then((data) => {
         if (data.proximaViagem) {
