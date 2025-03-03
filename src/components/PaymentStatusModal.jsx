@@ -81,7 +81,7 @@ const PaymentStatusModal = ({
   const handleSave = () => {
     const newParcelasPagas = installments.filter(inst => inst.status === 'Pago').length;
     setLoading(true);
-    fetch('/api/Passageiros.js?action=updatePagamento', {
+    fetch('/api/Passageiros?action=updatePagamento', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: registroId, parcelasPagas: newParcelasPagas })

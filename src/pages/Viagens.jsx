@@ -38,9 +38,9 @@ const Viagens = () => {
 
     setLoading(true);
     try {
-      let url = `/api/Viagens.js?action=getAll&page=${pageNumber}&limit=${limit}`;
+      let url = `/api/Viagens?action=getAll&page=${pageNumber}&limit=${limit}`;
       if (search.length >= 3) {
-        url = `/api/Viagens.js?action=getSearch&query=${encodeURIComponent(search)}&page=${pageNumber}&limit=${limit}`;
+        url = `/api/Viagens?action=getSearch&query=${encodeURIComponent(search)}&page=${pageNumber}&limit=${limit}`;
       }
 
       const response = await fetch(url, {
@@ -94,7 +94,7 @@ const Viagens = () => {
 
   const handleSaveViagem = async (newViagem) => {
     try {
-      const response = await fetch('/api/Viagens.js?action=createViagem', {
+      const response = await fetch('/api/Viagens?action=createViagem', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -146,7 +146,7 @@ const Viagens = () => {
     setDeleting(true);
 
     try {
-      const response = await fetch(`/api/Viagens.js?action=deleteViagem&id=${viagemToDelete.id}`, {
+      const response = await fetch(`/api/Viagens?action=deleteViagem&id=${viagemToDelete.id}`, {
         method: 'DELETE',
       });
 

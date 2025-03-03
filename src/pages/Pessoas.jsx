@@ -24,10 +24,10 @@ const Pessoas = () => {
 
     setLoading(true);
     try {
-      let url = `/api/Pessoas.js?action=getAll&page=${pageNumber}&limit=${limit}`;
+      let url = `/api/Pessoas?action=getAll&page=${pageNumber}&limit=${limit}`;
       
       if (search.length >= 3) {
-        url = `/api/Pessoas.js?action=getSearch&query=${encodeURIComponent(search)}&page=${pageNumber}&limit=${limit}`;
+        url = `/api/Pessoas?action=getSearch&query=${encodeURIComponent(search)}&page=${pageNumber}&limit=${limit}`;
       }
 
       const response = await fetch(url, {
@@ -82,7 +82,7 @@ const Pessoas = () => {
 
   const handleSavePerson = async (newPerson) => {
     try {
-      const response = await fetch('/api/Pessoas.js?action=createPessoa', {
+      const response = await fetch('/api/Pessoas?action=createPessoa', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -128,7 +128,7 @@ const Pessoas = () => {
     setDeleting(true);
 
     try {
-      const response = await fetch(`/api/Pessoas.js?action=deletePessoa&id=${personToDelete.id}`, {
+      const response = await fetch(`/api/Pessoas?action=deletePessoa&id=${personToDelete.id}`, {
         method: 'DELETE',
       });
 

@@ -65,7 +65,7 @@ const ViagemPassageiros = ({ viagemId }) => {
   // Buscar detalhes da viagem
   useEffect(() => {
     if (!viagemId) return;
-    fetch(`/api/Viagens.js?action=getById&id=${viagemId}`)
+    fetch(`/api/Viagens?action=getById&id=${viagemId}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.data && data.data[0]) {
@@ -84,9 +84,9 @@ const ViagemPassageiros = ({ viagemId }) => {
     setLoadingPassageiros(true);
     let url = "";
     if (query.length >= 3) {
-      url = `/api/Passageiros.js?action=getSearch&query=${encodeURIComponent(query)}&viagemId=${viagemId}&page=${pageNumber}&limit=${limit}`;
+      url = `/api/Passageiros?action=getSearch&query=${encodeURIComponent(query)}&viagemId=${viagemId}&page=${pageNumber}&limit=${limit}`;
     } else {
-      url = `/api/Passageiros.js?action=getByViagemId&id=${viagemId}&page=${pageNumber}&limit=${limit}`;
+      url = `/api/Passageiros?action=getByViagemId&id=${viagemId}&page=${pageNumber}&limit=${limit}`;
     }
     try {
       const response = await fetch(url);
@@ -186,7 +186,7 @@ const ViagemPassageiros = ({ viagemId }) => {
   const handleConfirmDelete = () => {
     if (!passageiroToDelete) return;
     setDeleteLoading(true);
-    fetch(`/api/Passageiros.js?action=deletePassageiro&id=${passageiroToDelete.id}`, {
+    fetch(`/api/Passageiros?action=deletePassageiro&id=${passageiroToDelete.id}`, {
       method: 'DELETE'
     })
       .then(res => res.json())
@@ -215,7 +215,7 @@ const ViagemPassageiros = ({ viagemId }) => {
   };
 
   const handlePrint = () => {
-    window.open(`/api/Passageiros.js?action=PrintListaPassageiros&id=${viagemId}`, '_blank');
+    window.open(`/api/Passageiros?action=PrintListaPassageiros&id=${viagemId}`, '_blank');
   };
 
   const handlePageChange = (newPage) => {

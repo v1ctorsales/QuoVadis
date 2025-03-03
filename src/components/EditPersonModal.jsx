@@ -59,7 +59,7 @@ const EditPersonModal = ({ open, handleClose, person, isNew }) => {
     try {
       // 🔥 Primeiro, verificar se o CPF já existe no banco de dados
       if (isNew) {
-        const checkResponse = await fetch(`/api/Pessoas.js?action=checkCPF&cpf=${formData.cpf}`);
+        const checkResponse = await fetch(`/api/Pessoas?action=checkCPF&cpf=${formData.cpf}`);
         const checkResult = await checkResponse.json();
         if (checkResult.exists) {
           toast.error("Este CPF já está cadastrado.");
@@ -69,7 +69,7 @@ const EditPersonModal = ({ open, handleClose, person, isNew }) => {
       }
   
       // 🔥 Se não existir, prosseguir com o envio
-      const endpoint = isNew ? '/api/Pessoas.js?action=createPessoa' : '/api/Pessoas.js?action=updatePessoa';
+      const endpoint = isNew ? '/api/Pessoas?action=createPessoa' : '/api/Pessoas?action=updatePessoa';
       const method = isNew ? 'POST' : 'PUT';
   
       const response = await fetch(endpoint, {

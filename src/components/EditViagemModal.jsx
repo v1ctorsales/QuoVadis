@@ -179,8 +179,8 @@ const EditViagemModal = ({ open, handleClose, viagem, isNew, onSave }) => {
   
     try {
       const endpoint = isNew 
-        ? '/api/Viagens.js?action=createViagem' 
-        : '/api/Viagens.js?action=updateViagem';
+        ? '/api/Viagens?action=createViagem' 
+        : '/api/Viagens?action=updateViagem';
       const method = isNew ? 'POST' : 'PUT';
   
       const response = await fetch(endpoint, {

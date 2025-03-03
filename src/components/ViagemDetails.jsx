@@ -50,7 +50,7 @@ function ViagemDetails() {
 
   useEffect(() => {
     if (id) {
-      fetch(`/api/Viagens.js?action=getById&id=${id}`)
+      fetch(`/api/Viagens?action=getById&id=${id}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.data && data.data[0]) {
@@ -149,7 +149,7 @@ function ViagemDetails() {
         custo_por_pessoa: custoPorPessoa  // Inclua o valor calculado aqui
       };
       
-      const response = await fetch('/api/Viagens.js?action=updateViagem', {
+      const response = await fetch('/api/Viagens?action=updateViagem', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
