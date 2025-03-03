@@ -139,15 +139,29 @@ function ViagemDetails() {
       // Calcular o custo por pessoa (gastoPorPessoa já deve ser calculado corretamente)
       const custoPorPessoa = parseFloat(gastoPorPessoa) || 0;
       
-      const payload = { 
-        id, 
-        ...formData, 
-        viagem: formData.destino, 
+      const payload = {
+        id,
+        destino: formData.destino,
+        dataIda: formData.data_ida,
+        dataVolta: formData.data_volta,
+        quantidade_pessoas: formData.quantidade_pessoas,
         transporte: transporteFinal,
+        valorTransporte: formData.valor_transporte,
+        transportePorPessoa: formData.calculo_valor_transporte_por_pessoa,
+        hospedagem: formData.hotel,
+        valorHospedagem: formData.valor_hotel,
+        hospedagemPorPessoa: formData.calculo_valor_hotel_por_pessoa,
+        gastoPasseiosPorPessoa: formData.gastos_passeios_por_pessoa,
+        valorGastoPasseios: formData.gastos_passeios,
+        gastoAlimentacaoPorPessoa: formData.gastos_alimentacao_por_pessoa,
+        valorGastoAlimentacao: formData.gastos_alimentacao,
+        outrosGastosPorPessoa: formData.outros_gastos_por_pessoa,
+        valorOutrosGastos: formData.outros_gastos,
         limite_parcelas: parseInt(formData.limite_parcelas),
-        preco_definido: parseFloat(formData.preco_definido), // Se esse campo existir
-        custo_por_pessoa: custoPorPessoa  // Inclua o valor calculado aqui
+        preco_definido: parseFloat(formData.preco_definido),
+        custo_por_pessoa: custoPorPessoa
       };
+      
       
       const response = await fetch('/api/Viagens.js?action=updateViagem', {
         method: 'PUT',
