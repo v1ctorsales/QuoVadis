@@ -72,6 +72,18 @@ export default async function handler(req, res) {
       if (!nome || !telefone || !cpf || !rg || !nascimento) {
         return res.status(400).json({ error: "Todos os campos são obrigatórios para criar uma pessoa." });
       }
+
+      const capitalizeName = (nome) => {
+        return nome
+          .split(' ')
+          .map(palavra => palavra.charAt(0).toUpperCase() + palavra.slice(1).toLowerCase())
+          .join(' ');
+      };
+      
+      // Função para remover o prefixo '31' do telefone, se existir
+      const formatTelefone = (telefone) => {
+        return telefone.startsWith('31') ? telefone.slice(2) : telefone;
+      };
     
       // 🔥 Verificar se o CPF já está cadastrado antes de criar a pessoa
       const { data: existingPerson, error: checkError } = await supabase
@@ -85,21 +97,24 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "Este CPF já está cadastrado." });
       }
     
+        // Aplicando as alterações:
+      const nomeFormatado = capitalizeName(nome);
+      const telefoneFormatado = formatTelefone(telefone);
       console.log(`➕ Criando nova pessoa: ${nome}...`);
     
       const { data, error } = await supabase
-        .from("pessoas")
-        .insert([{ nome, telefone, cpf, rg, nascimento }])
-        .select();
-    
-      if (error) {
-        console.error("❌ Erro ao criar pessoa:", error);
-        return res.status(500).json({ error: "Erro ao criar pessoa no Supabase." });
-      }
-    
-      console.log("✅ Pessoa criada com sucesso:", data);
-      return res.status(201).json({ message: "Pessoa criada com sucesso", data });
+      .from("pessoas")
+      .insert([{ nome: nomeFormatado, telefone: telefoneFormatado, cpf, rg, nascimento }])
+      .select();
+  
+    if (error) {
+      console.error("❌ Erro ao criar pessoa:", error);
+      return res.status(500).json({ error: "Erro ao criar pessoa no Supabase." });
     }
+  
+    console.log("✅ Pessoa criada com sucesso:", data);
+    return res.status(201).json({ message: "Pessoa criada com sucesso", data });
+  }
     
     // 🔹 Atualizar Pessoa (PUT)
     else if (req.method === "PUT" && action === "updatePessoa") {

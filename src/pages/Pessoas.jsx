@@ -157,30 +157,34 @@ const Pessoas = () => {
 
       {/* Barra de pesquisa e botão de adicionar */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-        <TextField
-          label="Pesquisar por nome"
-          variant="outlined"
-          fullWidth
-          value={searchQuery}
-          onChange={(e) => {
-            const value = e.target.value.trim();
-            setSearchQuery(value);
+      <TextField
+  label="Pesquisar por nome"
+  variant="outlined"
+  fullWidth
+  value={searchQuery}
+  onChange={(e) => {
+    // Atualiza o state com o valor digitado sem modificar
+    const value = e.target.value;
+    setSearchQuery(value);
 
-            if (searchTimeout) clearTimeout(searchTimeout);
+    if (searchTimeout) clearTimeout(searchTimeout);
 
-            const timeout = setTimeout(() => {
-              if (value.length >= 3) {
-                fetchData(value, 1);
-                setPage(1);
-              } else if (value.length === 0) {
-                fetchData("", 1);
-                setPage(1);
-              }
-            }, 500);
-            setSearchTimeout(timeout);
-          }}
-          sx={{ mr: 2 }}
-        />
+    const timeout = setTimeout(() => {
+      // Aplica trim somente na hora de buscar
+      const trimmedValue = value.trim();
+      if (trimmedValue.length >= 3) {
+        fetchData(trimmedValue, 1);
+        setPage(1);
+      } else if (trimmedValue.length === 0) {
+        fetchData("", 1);
+        setPage(1);
+      }
+    }, 500);
+    setSearchTimeout(timeout);
+  }}
+  sx={{ mr: 2 }}
+/>
+
 
         <Button
           variant="contained"
