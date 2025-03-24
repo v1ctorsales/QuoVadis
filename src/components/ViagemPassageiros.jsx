@@ -28,8 +28,15 @@ import AddPassageiroModal from './AddPassageiroModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 
 const ViagemPassageiros = ({ viagemId }) => {
-  const { passageiros, setPassageiros, updatePassageiro, removePassageiro } = usePassageirosStore();
+  // Função auxiliar para formatar a data no formato local
+  const formatLocalDate = (dateString) => {
+    if (!dateString) return "Data não informada";
+    const [year, month, day] = dateString.split('-');
+    const dateObj = new Date(year, month - 1, day); // Cria a data como local
+    return dateObj.toLocaleDateString('pt-BR');
+  };
 
+  const { passageiros, setPassageiros, updatePassageiro, removePassageiro } = usePassageirosStore();
   const [rawPassageiros, setRawPassageiros] = useState(null);
   const [loadingPassageiros, setLoadingPassageiros] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -124,15 +131,16 @@ const ViagemPassageiros = ({ viagemId }) => {
   useEffect(() => {
     if (!rawPassageiros) return;
     const processed = rawPassageiros.map((item) => {
-      // Valor padrão do status e do display das parcelas pagas
-      let statusPagamento = computeStatus(item.parcelas, item.parcelas_pagas, item.mes_inicio_pagamento);
-      let parcelasPagasDisplay = `${item.parcelas_pagas}/${item.parcelas}`;
+      // Converte o valor de parcelas pagas para número
+      const parcelasPagasNumber = Number(item.parcelas_pagas) || 0;
+      let statusPagamento = computeStatus(item.parcelas, parcelasPagasNumber, item.mes_inicio_pagamento);
+      const parcelasPagasDisplay = `${parcelasPagasNumber}/${item.parcelas}`;
       let isPaymentDisabled = false;
       
-      // Se a propriedade nao_paga for true, modifica os valores:
       if (item.pessoa && item.pessoa.nao_paga) {
         statusPagamento = "Viagem Paga";
-        parcelasPagasDisplay = "-";
+        // Se não paga, podemos definir o display como "-"
+        // e desabilitar a ação de pagamento
         isPaymentDisabled = true;
       }
       
@@ -142,18 +150,19 @@ const ViagemPassageiros = ({ viagemId }) => {
         cpf: item.pessoa?.cpf,
         rg: item.pessoa?.rg,
         telefone: item.pessoa?.telefone || "",
+        // Utiliza a função auxiliar para formatar a data corretamente
         nascimento: item.pessoa?.nascimento,
         parcelas: item.parcelas,
-        parcelasPagas: parcelasPagasDisplay,
+        parcelasPagas: parcelasPagasNumber, // valor numérico para cálculos
+        parcelasPagasDisplay: item.pessoa && item.pessoa.nao_paga ? "-" : parcelasPagasDisplay, // para exibição
         mesInicioPagamento: item.mes_inicio_pagamento,
         valorViagem: valorViagem,
         statusPagamento: statusPagamento,
-        isPaymentDisabled: isPaymentDisabled // propriedade para controlar se o botão deve ser desabilitado
+        isPaymentDisabled: isPaymentDisabled
       };
     });
     setPassageiros(processed, total);
   }, [rawPassageiros, valorViagem, setPassageiros, total]);
-  
 
   const handleOpenModal = (passageiro) => {
     setSelectedPassageiro(passageiro);
@@ -205,7 +214,6 @@ const ViagemPassageiros = ({ viagemId }) => {
       });
   };
 
-  // Refazer busca ao inserir novo passageiro
   const handleAddNewPassageiro = () => {
     fetchPassengers(searchQuery, page);
   };
@@ -288,58 +296,55 @@ const ViagemPassageiros = ({ viagemId }) => {
               </TableRow>
             ) : (
               passageiros.map((passageiro) => {
-                const dataNascimento = passageiro.nascimento
-                  ? new Date(passageiro.nascimento).toLocaleDateString('pt-BR')
-                  : "Data não informada";
+                // Usa a função auxiliar para formatar a data de nascimento
+                const dataNascimento = formatLocalDate(passageiro.nascimento);
                 const cpfValido = passageiro.cpf || "CPF não informado";
                 const rgValido = passageiro.rg || "RG não informado";
                 const telefoneValido = passageiro.telefone || "Telefone não informado";
                 return (
                   <TableRow key={passageiro.id}>
-  <TableCell align="center">{passageiro.nome}</TableCell>
-  <TableCell align="center">{cpfValido}</TableCell>
-  <TableCell align="center">{rgValido}</TableCell>
-  <TableCell align="center">{telefoneValido}</TableCell>
-  <TableCell align="center">{dataNascimento}</TableCell>
-  {/* Exibe o valor processado (que já é "-" se nao_paga for true) */}
-  <TableCell align="center">{passageiro.parcelasPagas}</TableCell>
-  <TableCell align="center">
-    {passageiro.statusPagamento === "Atrasado" && (
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'red' }}>
-        <ErrorOutlineIcon sx={{ mr: 1 }} /> Atrasado
-      </Box>
-    )}
-    {passageiro.statusPagamento === "Em dia" && (
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'green' }}>
-        <CheckCircleIcon sx={{ mr: 1 }} /> Em dia
-      </Box>
-    )}
-    {passageiro.statusPagamento === "Viagem Paga" && (
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'primary.main' }}>
-        <StarIcon sx={{ mr: 1 }} /> Viagem Paga
-      </Box>
-    )}
-  </TableCell>
-  <TableCell align="center">
-    <IconButton
-      color="primary"
-      aria-label="editar"
-      onClick={() => handleOpenModal(passageiro)}
-      disabled={passageiro.isPaymentDisabled}  // desabilita se nao_paga for true
-    >
-      <MonetizationOnIcon />
-    </IconButton>
-    <IconButton
-      color="error"
-      aria-label="excluir"
-      onClick={() => handleOpenDeleteModal(passageiro)}
-      sx={{ borderRadius: 1, mx: 0.5, width: 32, height: 32 }}
-    >
-      <RemoveCircleOutlineIcon />
-    </IconButton>
-  </TableCell>
-</TableRow>
-
+                    <TableCell align="center">{passageiro.nome}</TableCell>
+                    <TableCell align="center">{cpfValido}</TableCell>
+                    <TableCell align="center">{rgValido}</TableCell>
+                    <TableCell align="center">{telefoneValido}</TableCell>
+                    <TableCell align="center">{dataNascimento}</TableCell>
+                    <TableCell align="center">{passageiro.parcelasPagasDisplay}</TableCell>
+                    <TableCell align="center">
+                      {passageiro.statusPagamento === "Atrasado" && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'red' }}>
+                          <ErrorOutlineIcon sx={{ mr: 1 }} /> Atrasado
+                        </Box>
+                      )}
+                      {passageiro.statusPagamento === "Em dia" && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'green' }}>
+                          <CheckCircleIcon sx={{ mr: 1 }} /> Em dia
+                        </Box>
+                      )}
+                      {passageiro.statusPagamento === "Viagem Paga" && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'primary.main' }}>
+                          <StarIcon sx={{ mr: 1 }} /> Viagem Paga
+                        </Box>
+                      )}
+                    </TableCell>
+                    <TableCell align="center">
+                      <IconButton
+                        color="primary"
+                        aria-label="editar"
+                        onClick={() => handleOpenModal(passageiro)}
+                        disabled={passageiro.isPaymentDisabled}
+                      >
+                        <MonetizationOnIcon />
+                      </IconButton>
+                      <IconButton
+                        color="error"
+                        aria-label="excluir"
+                        onClick={() => handleOpenDeleteModal(passageiro)}
+                        sx={{ borderRadius: 1, mx: 0.5, width: 32, height: 32 }}
+                      >
+                        <RemoveCircleOutlineIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
                 );
               })
             )}
@@ -381,7 +386,7 @@ const ViagemPassageiros = ({ viagemId }) => {
           telefone={selectedPassageiro.telefone}
           mesInicioPagamento={selectedPassageiro.mesInicioPagamento}
           parcelas={selectedPassageiro.parcelas}
-          parcelasPagas={selectedPassageiro.parcelasPagas}
+          parcelasPagas={selectedPassageiro.parcelasPagas}  // valor numérico
           valorViagem={selectedPassageiro.valorViagem}
           nomeViagem={nomeViagem}
           onSave={handleSave}

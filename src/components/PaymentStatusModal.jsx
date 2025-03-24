@@ -23,8 +23,16 @@ import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import StarIcon from '@mui/icons-material/Star';
 
+// Função para remover as horas e manter somente o dia
 function dateOnly(date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+// Função para converter uma string "YYYY-MM-DD" em uma data local
+function parseLocalDate(dateString) {
+  if (!dateString) return new Date();
+  const [year, month, day] = dateString.split('-');
+  return new Date(year, month - 1, day);
 }
 
 const PaymentStatusModal = ({
@@ -47,15 +55,18 @@ const PaymentStatusModal = ({
 
   useEffect(() => {
     if (!parcelas) return;
+    // Converte o valor recebido para parcelas pagas para número
+    const parcelasPagasNumber = Number(parcelasPagas) || 0;
     const todayNoTime = dateOnly(new Date());
-    const dateBase = mesInicioPagamento ? new Date(mesInicioPagamento) : new Date();
+    // Usa a função parseLocalDate para converter mesInicioPagamento em data local
+    const dateBase = mesInicioPagamento ? parseLocalDate(mesInicioPagamento) : new Date();
     const data = [];
     for (let i = 0; i < parcelas; i++) {
       const dueDateObj = addMonths(dateBase, i);
       const dueDateNoTime = dateOnly(dueDateObj);
       const formattedDueDate = format(dueDateNoTime, 'dd/MM/yyyy');
       let statusInicial;
-      if (i < parcelasPagas) {
+      if (i < parcelasPagasNumber) {
         statusInicial = "Pago";
       } else {
         statusInicial = dueDateNoTime < todayNoTime ? "Atrasado" : "Não Pago";

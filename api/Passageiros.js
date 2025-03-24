@@ -260,7 +260,7 @@ export default async function handler(req, res) {
       doc.moveDown();
 
       // 5. Definir colunas e largura
-      const colWidths = [190, 90, 80, 80, 70]; 
+      const colWidths = [222, 83, 72, 75, 63]; 
       // Nome, CPF, RG, Telefone, Nascimento
       const colTitles = ["Nome", "CPF", "RG", "Telefone", "Nascimento"];
 

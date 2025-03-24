@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { 
   Box, 
   CircularProgress, 
@@ -23,8 +23,12 @@ const ToggleLabelCustom = ({ checked }) => (
 function ViagemDetails() {
   const [searchParams] = useSearchParams();
   const id = searchParams.get('id');
+  const navigate = useNavigate();
+  
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  
+  // Estado para os dados do formulário
   const [formData, setFormData] = useState({
     destino: "",
     quantidade_pessoas: "",
@@ -45,8 +49,11 @@ function ViagemDetails() {
     outros_gastos_por_pessoa: false,
     preco_definido: "",
     preco_sugerido: "",
-    limite_parcelas: "1"  // novo campo
+    limite_parcelas: "1"
   });
+
+  // Estado para armazenar o valor original de preco_definido
+  const [initialPrecoDefinido, setInitialPrecoDefinido] = useState("");
 
   useEffect(() => {
     if (id) {
@@ -77,6 +84,8 @@ function ViagemDetails() {
               preco_sugerido: v.preco_sugerido || "",
               limite_parcelas: v.limite_parcelas || "1"
             });
+            // Armazena o valor original de preco_definido para comparação
+            setInitialPrecoDefinido(v.preco_definido ?? "");
           } else {
             toast.error("Viagem não encontrada.");
           }
@@ -130,8 +139,6 @@ function ViagemDetails() {
 
   const gastoPorPessoa = calculateGastoPorPessoa();
 
-
-
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -162,8 +169,6 @@ function ViagemDetails() {
         custo_por_pessoa: custoPorPessoa
       };
       
-      
-      
       const response = await fetch('/api/Viagens.js?action=updateViagem', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -172,6 +177,10 @@ function ViagemDetails() {
       const result = await response.json();
       if (response.ok) {
         toast.success("Viagem atualizada com sucesso!");
+        // Verifica se o preco_definido foi alterado
+        if (formData.preco_definido !== initialPrecoDefinido) {
+          navigate('/viagens');
+        }
       } else {
         toast.error("Erro ao atualizar: " + result.error);
       }
@@ -181,10 +190,6 @@ function ViagemDetails() {
       setSaving(false);
     }
   };
-  
-
-  
-  
 
   if (loading) {
     return (
@@ -426,14 +431,14 @@ function ViagemDetails() {
           * Preço recomendado: {gastoPorPessoa.toFixed(2) * 1.3}
         </Typography>
         <TextField
-        fullWidth
-        name="preco_definido"
-        label="Preço Por Pessoa"
-        type="number"
-        value={formData.preco_definido}
-        onChange={handleChange}
-        sx={{ mb: 2 }}
-      />
+          fullWidth
+          name="preco_definido"
+          label="Preço Por Pessoa"
+          type="number"
+          value={formData.preco_definido}
+          onChange={handleChange}
+          sx={{ mb: 2 }}
+        />
 
         <TextField
           select

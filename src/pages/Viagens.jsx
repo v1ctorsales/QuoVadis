@@ -253,13 +253,13 @@ const Viagens = () => {
   <IconButton 
     color="primary" 
     onClick={() => handleView(viagem.id)}
-    sx={{ bgcolor: 'primary.main', color: 'white', borderRadius: 1, mx: 0.5, width: 32, height: 32 }}
+    sx={{ bgcolor: 'primary.main', color: 'white', borderRadius: 1, mx: 0.5, width: 32, height: 32,'&:hover': { bgcolor: '#0c4e90', } }}
   >
     <VisibilityIcon fontSize="small" />
   </IconButton>
   <IconButton 
     onClick={() => handleDelete(viagem.id)}
-    sx={{ bgcolor: 'red', color: 'white', borderRadius: 1, mx: 0.5, width: 32, height: 32 }}
+    sx={{ bgcolor: 'red', color: 'white', borderRadius: 1, mx: 0.5, width: 32, height: 32, '&:hover': { bgcolor: '#a00303',} }}
   >
     <Delete fontSize="small" />
   </IconButton>
