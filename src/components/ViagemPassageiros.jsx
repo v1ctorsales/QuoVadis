@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
@@ -18,22 +18,23 @@ import {
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import PaymentStatusModal from './PaymentStatusModal';
-import { addMonths } from 'date-fns';
 import usePassageirosStore from '../store/usePassageiroStore';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import StarIcon from '@mui/icons-material/Star';
 import { Add, Print as PrintIcon } from '@mui/icons-material';
 import AddPassageiroModal from './AddPassageiroModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 
 const ViagemPassageiros = ({ viagemId }) => {
-  // Função auxiliar para formatar a data no formato local
+  // Função para formatar datas
   const formatLocalDate = (dateString) => {
     if (!dateString) return "Data não informada";
     const [year, month, day] = dateString.split('-');
-    const dateObj = new Date(year, month - 1, day); // Cria a data como local
+    const dateObj = new Date(year, month - 1, day);
     return dateObj.toLocaleDateString('pt-BR');
+  };
+
+  // Função para formatar valores monetários
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
   };
 
   const { passageiros, setPassageiros, updatePassageiro, removePassageiro } = usePassageirosStore();
@@ -52,24 +53,10 @@ const ViagemPassageiros = ({ viagemId }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const limit = 10; // número de registros por página
+  const limit = 10;
   const [searchTimeout, setSearchTimeout] = useState(null);
 
-  const computeStatus = (parcelas, parcelasPagas, mesInicioPagamento) => {
-    if (parcelasPagas >= parcelas) return "Viagem Paga";
-    const start = mesInicioPagamento ? new Date(mesInicioPagamento) : new Date();
-    const today = new Date();
-    let dueCount = 0;
-    for (let i = 0; i < parcelas; i++) {
-      const dueDate = addMonths(start, i);
-      if (dueDate <= today) {
-        dueCount++;
-      }
-    }
-    return parcelasPagas >= dueCount ? "Em dia" : "Atrasado";
-  };
-
-  // Buscar detalhes da viagem
+  // Buscar detalhes da viagem (ex: preco_definido)
   useEffect(() => {
     if (!viagemId) return;
     fetch(`/api/Viagens.js?action=getById&id=${viagemId}`)
@@ -86,7 +73,7 @@ const ViagemPassageiros = ({ viagemId }) => {
       });
   }, [viagemId]);
 
-  // Função unificada para buscar passageiros com busca e paginação
+  // Função para buscar passageiros com paginação e busca
   const fetchPassengers = async (query = "", pageNumber = 1) => {
     setLoadingPassageiros(true);
     let url = "";
@@ -112,7 +99,6 @@ const ViagemPassageiros = ({ viagemId }) => {
     }
   };
 
-  // Buscar passageiros ao montar ou quando o ID da viagem mudar
   useEffect(() => {
     if (viagemId) {
       setPage(1);
@@ -120,29 +106,27 @@ const ViagemPassageiros = ({ viagemId }) => {
     }
   }, [viagemId]);
 
-  // Buscar novamente quando a página mudar
   useEffect(() => {
     if (viagemId) {
       fetchPassengers(searchQuery, page);
     }
   }, [page]);
 
-  // Processar dados e atualizar a store
+  // Processar dados para a store, calculando "valor pago" e "valor faltante"
   useEffect(() => {
     if (!rawPassageiros) return;
     const processed = rawPassageiros.map((item) => {
-      // Converte o valor de parcelas pagas para número
-      const parcelasPagasNumber = Number(item.parcelas_pagas) || 0;
-      let statusPagamento = computeStatus(item.parcelas, parcelasPagasNumber, item.mes_inicio_pagamento);
-      const parcelasPagasDisplay = `${parcelasPagasNumber}/${item.parcelas}`;
-      let isPaymentDisabled = false;
-      
-      if (item.pessoa && item.pessoa.nao_paga) {
-        statusPagamento = "Viagem Paga";
-        // Se não paga, podemos definir o display como "-"
-        // e desabilitar a ação de pagamento
-        isPaymentDisabled = true;
-      }
+      // Converte cada pagamento garantindo que vírgulas sejam substituídas por pontos
+      const valorPago = item.pagamentos
+        ? item.pagamentos.reduce((acc, pag) => {
+            const valorConvertido = parseFloat(String(pag.valor).replace(',', '.')) || 0;
+            return acc + valorConvertido;
+          }, 0)
+        : 0;
+        
+      // Garante que o valor total da viagem seja numérico
+      const totalViagem = parseFloat(String(valorViagem).replace(',', '.')) || 0;
+      const valorFaltante = totalViagem - valorPago;
       
       return {
         id: item.id,
@@ -150,48 +134,46 @@ const ViagemPassageiros = ({ viagemId }) => {
         cpf: item.pessoa?.cpf,
         rg: item.pessoa?.rg,
         telefone: item.pessoa?.telefone || "",
-        // Utiliza a função auxiliar para formatar a data corretamente
         nascimento: item.pessoa?.nascimento,
-        parcelas: item.parcelas,
-        parcelasPagas: parcelasPagasNumber, // valor numérico para cálculos
-        parcelasPagasDisplay: item.pessoa && item.pessoa.nao_paga ? "-" : parcelasPagasDisplay, // para exibição
         mesInicioPagamento: item.mes_inicio_pagamento,
-        valorViagem: valorViagem,
-        statusPagamento: statusPagamento,
-        isPaymentDisabled: isPaymentDisabled
+        valorViagem: totalViagem,
+        valorPago: valorPago,
+        pagamentos: item.pagamentos,
+        valorFaltante: valorFaltante,
+        isPaymentDisabled: item.pessoa && item.pessoa.nao_paga
       };
     });
     setPassageiros(processed, total);
   }, [rawPassageiros, valorViagem, setPassageiros, total]);
+  
 
   const handleOpenModal = (passageiro) => {
     setSelectedPassageiro(passageiro);
     setModalOpen(true);
   };
 
-  const handleSave = (newParcelasPagas) => {
+  const handleSave = (updatedPayments) => {
     if (selectedPassageiro) {
+      const updatedValorPago = updatedPayments.reduce((acc, payment) => {
+        return acc + Number(payment.valor);
+      }, 0);
       const updatedPassageiro = {
         ...selectedPassageiro,
-        parcelasPagas: newParcelasPagas,
-        statusPagamento: computeStatus(
-          selectedPassageiro.parcelas,
-          newParcelasPagas,
-          selectedPassageiro.mesInicioPagamento
-        )
+        valorPago: updatedValorPago,
+        valorFaltante: Number(selectedPassageiro.valorViagem) - updatedValorPago,
+        pagamentos: updatedPayments
       };
       updatePassageiro(updatedPassageiro);
     }
     setModalOpen(false);
   };
+  
 
-  // Abrir modal de exclusão
   const handleOpenDeleteModal = (passageiro) => {
     setPassageiroToDelete(passageiro);
     setDeleteModalOpen(true);
   };
 
-  // Confirmar exclusão
   const handleConfirmDelete = () => {
     if (!passageiroToDelete) return;
     setDeleteLoading(true);
@@ -200,15 +182,13 @@ const ViagemPassageiros = ({ viagemId }) => {
     })
       .then(res => res.json())
       .then(data => {
-        console.log("[ViagemPassageiros] Passageiro excluído:", data);
         removePassageiro(passageiroToDelete.id);
         setDeleteLoading(false);
         setDeleteModalOpen(false);
-        // Após a exclusão, refaz a busca mantendo a página e query atuais
         fetchPassengers(searchQuery, page);
       })
       .catch(err => {
-        console.error("[ViagemPassageiros] Erro ao excluir passageiro:", err);
+        console.error("Erro ao excluir passageiro:", err);
         setDeleteLoading(false);
         setDeleteModalOpen(false);
       });
@@ -233,7 +213,7 @@ const ViagemPassageiros = ({ viagemId }) => {
 
   return (
     <Box sx={{ p: 2 }}>
-      {/* Cabeçalho com título, busca, link de impressão e botão de adicionar */}
+      {/* Cabeçalho com busca, impressão e botão de adicionar */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap' }}>
         <Box sx={{ flexGrow: 1, mr: 2, mb: { xs: 1, sm: 0 } }}>
           <TextField
@@ -276,8 +256,8 @@ const ViagemPassageiros = ({ viagemId }) => {
               <TableCell sx={{ color: 'white', textAlign: 'center' }}>RG</TableCell>
               <TableCell sx={{ color: 'white', textAlign: 'center' }}>Telefone</TableCell>
               <TableCell sx={{ color: 'white', textAlign: 'center' }}>Nascimento</TableCell>
-              <TableCell sx={{ color: 'white', textAlign: 'center' }}>Parcelas Pagas</TableCell>
-              <TableCell sx={{ color: 'white', textAlign: 'center' }}>Status</TableCell>
+              <TableCell sx={{ color: 'white', textAlign: 'center' }}>Valor Pago</TableCell>
+              <TableCell sx={{ color: 'white', textAlign: 'center' }}>Valor Faltante</TableCell>
               <TableCell sx={{ color: 'white', textAlign: 'center' }}>Ações</TableCell>
             </TableRow>
           </TableHead>
@@ -296,7 +276,6 @@ const ViagemPassageiros = ({ viagemId }) => {
               </TableRow>
             ) : (
               passageiros.map((passageiro) => {
-                // Usa a função auxiliar para formatar a data de nascimento
                 const dataNascimento = formatLocalDate(passageiro.nascimento);
                 const cpfValido = passageiro.cpf || "CPF não informado";
                 const rgValido = passageiro.rg || "RG não informado";
@@ -308,24 +287,8 @@ const ViagemPassageiros = ({ viagemId }) => {
                     <TableCell align="center">{rgValido}</TableCell>
                     <TableCell align="center">{telefoneValido}</TableCell>
                     <TableCell align="center">{dataNascimento}</TableCell>
-                    <TableCell align="center">{passageiro.parcelasPagasDisplay}</TableCell>
-                    <TableCell align="center">
-                      {passageiro.statusPagamento === "Atrasado" && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'red' }}>
-                          <ErrorOutlineIcon sx={{ mr: 1 }} /> Atrasado
-                        </Box>
-                      )}
-                      {passageiro.statusPagamento === "Em dia" && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'green' }}>
-                          <CheckCircleIcon sx={{ mr: 1 }} /> Em dia
-                        </Box>
-                      )}
-                      {passageiro.statusPagamento === "Viagem Paga" && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'primary.main' }}>
-                          <StarIcon sx={{ mr: 1 }} /> Viagem Paga
-                        </Box>
-                      )}
-                    </TableCell>
+                    <TableCell align="center">{formatCurrency(passageiro.valorPago)}</TableCell>
+                    <TableCell align="center">{formatCurrency(passageiro.valorFaltante)}</TableCell>
                     <TableCell align="center">
                       <IconButton
                         color="primary"
@@ -385,10 +348,8 @@ const ViagemPassageiros = ({ viagemId }) => {
           nome={selectedPassageiro.nome}
           telefone={selectedPassageiro.telefone}
           mesInicioPagamento={selectedPassageiro.mesInicioPagamento}
-          parcelas={selectedPassageiro.parcelas}
-          parcelasPagas={selectedPassageiro.parcelasPagas}  // valor numérico
           valorViagem={selectedPassageiro.valorViagem}
-          nomeViagem={nomeViagem}
+          pagamentos={selectedPassageiro.pagamentos}
           onSave={handleSave}
         />
       )}

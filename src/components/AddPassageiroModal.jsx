@@ -8,20 +8,15 @@ import {
   TextField,
   CircularProgress,
   Box,
-  Select,
-  MenuItem,
-  InputLabel,
-  FormControl,
   Typography
 } from '@mui/material';
 import Autocomplete from '@mui/material/Autocomplete';
 import useViagensStore from '../store/useViagensStore';
-
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 const AddPassageiroModal = ({ open, onClose, onAdd, viagemId: propViagemId }) => {
-  // Obtem as viagens da store
+  // Obtém as viagens da store
   const { viagens } = useViagensStore();
   console.log("[AddPassageiroModal] Viagens da store:", viagens);
 
@@ -33,7 +28,9 @@ const AddPassageiroModal = ({ open, onClose, onAdd, viagemId: propViagemId }) =>
   console.log("[AddPassageiroModal] Viagem selecionada:", selectedViagem);
 
   // Usa o valor de preco_definido se estiver definido; caso contrário, 0
-  const totalViagem = selectedViagem && selectedViagem.preco_definido != null ? selectedViagem.preco_definido : 0;
+  const totalViagem = selectedViagem && selectedViagem.preco_definido != null 
+    ? selectedViagem.preco_definido 
+    : 0;
   console.log("[AddPassageiroModal] totalViagem:", totalViagem);
 
   // Estados para a busca de pessoas
@@ -41,11 +38,6 @@ const AddPassageiroModal = ({ open, onClose, onAdd, viagemId: propViagemId }) =>
   const [peopleOptions, setPeopleOptions] = useState([]);
   const [loadingSearch, setLoadingSearch] = useState(false);
   const [selectedPerson, setSelectedPerson] = useState(null);
-
-  // Estado para o dropdown de parcelas (default = 1)
-  const [installmentsCount, setInstallmentsCount] = useState(1);
-  // Estado para a data da primeira cobrança (formato YYYY-MM-DD)
-  const [firstChargeDate, setFirstChargeDate] = useState('');
 
   // Estado de loading para salvar
   const [saving, setSaving] = useState(false);
@@ -72,21 +64,18 @@ const AddPassageiroModal = ({ open, onClose, onAdd, viagemId: propViagemId }) =>
       });
   }, [searchQuery]);
 
-  // Calcula o valor de cada parcela com base no valor total da viagem e no número de parcelas selecionado
-  const installmentValue = totalViagem ? totalViagem / installmentsCount : 0;
-  console.log("[AddPassageiroModal] installmentValue:", installmentValue);
-
   const handleSave = () => {
-    if (!selectedPerson || !installmentsCount || !firstChargeDate) {
+    if (!selectedPerson) {
       toast.warn("Preencha todos os campos.");
       return;
     }
+    // Cria payload com valores padrão para parcelas
     const payload = {
       idPessoa: selectedPerson.id,
       idViagem: selectedViagem ? selectedViagem.id : null,
-      parcelas: installmentsCount,
+      parcelas: 1,
       parcelas_pagas: 0,
-      mes_inicio_pagamento: firstChargeDate
+      mes_inicio_pagamento: null
     };
   
     setSaving(true);
@@ -117,7 +106,6 @@ const AddPassageiroModal = ({ open, onClose, onAdd, viagemId: propViagemId }) =>
       .catch(err => {
         console.error("[AddPassageiroModal] Erro ao inserir passageiro:", err);
         setSaving(false);
-        // Se for o caso de duplicado, virá "Passageiro já cadastrado para esta viagem." do backend
         if (err.message.includes("Passageiro já cadastrado")) {
           toast.error("Erro: Este passageiro já foi adicionado a esta viagem.");
         } else {
@@ -125,7 +113,6 @@ const AddPassageiroModal = ({ open, onClose, onAdd, viagemId: propViagemId }) =>
         }
       });
   };
-  
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth>
@@ -158,48 +145,6 @@ const AddPassageiroModal = ({ open, onClose, onAdd, viagemId: propViagemId }) =>
                 }}
               />
             )}
-          />
-        </Box>
-
-        {/* Área para selecionar o número de parcelas e exibir o cálculo (50% cada) */}
-        <Box sx={{ mt: 2, display: 'flex', alignItems: 'center' }}>
-          <FormControl fullWidth sx={{ width: '50%' }}>
-            <InputLabel id="limite-parcelas-label">Limite de parcelas</InputLabel>
-            <Select
-              labelId="limite-parcelas-label"
-              name="limite_parcelas"
-              value={installmentsCount}
-              onChange={(e) => setInstallmentsCount(e.target.value)}
-              label="Limite de parcelas"
-            >
-              {Array.from({ length: 10 }, (_, i) => {
-                const value = i + 1;
-                return (
-                  <MenuItem key={value} value={value}>
-                    {value === 1 ? "Somente a vista" : `${value}x`}
-                  </MenuItem>
-                );
-              })}
-            </Select>
-          </FormControl>
-          <Box sx={{ width: '50%', ml: 2, textAlign: 'right' }}>
-            <Typography variant="body1">
-              {installmentsCount}x{" "}
-              {installmentValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-            </Typography>
-          </Box>
-        </Box>
-
-        {/* Campo para a data da primeira cobrança */}
-        <Box sx={{ mt: 2 }}>
-          <TextField
-            label="Data da primeira cobrança"
-            variant="outlined"
-            fullWidth
-            type="date"
-            InputLabelProps={{ shrink: true }}
-            value={firstChargeDate}
-            onChange={(e) => setFirstChargeDate(e.target.value)}
           />
         </Box>
       </DialogContent>
