@@ -350,6 +350,7 @@ const ViagemPassageiros = ({ viagemId }) => {
           mesInicioPagamento={selectedPassageiro.mesInicioPagamento}
           valorViagem={selectedPassageiro.valorViagem}
           pagamentos={selectedPassageiro.pagamentos}
+          nomeViagem={nomeViagem}
           onSave={handleSave}
         />
       )}

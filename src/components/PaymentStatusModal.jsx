@@ -210,19 +210,20 @@ const PaymentStatusModal = ({
     ctx.textAlign = 'left';
     ctx.fillText(`Nome: ${nome}`, 20, 150);
     ctx.fillText(`Telefone: ${telefone}`, 20, 170);
+    ctx.fillText(`Viagem: ${nomeViagem}`, 20, 190);
     ctx.fillText(
       `Valor Total: ${totalViagemNum.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`,
       20,
-      190
+      210
     );
   
     // Título da Tabela de Pagamentos
     ctx.font = 'bold 18px Arial';
-    ctx.fillText('Parcelas Pagas:', 20, 230);
+    ctx.fillText('Parcelas Pagas:', 20, 250);
   
     // Cabeçalho da tabela
     ctx.font = 'bold 16px Arial';
-    const startY = 260;
+    const startY = 280;
     ctx.fillText('Parcela', 20, startY);
     ctx.fillText('Data', 150, startY);
     ctx.fillText('Valor', 300, startY);
@@ -240,7 +241,7 @@ const PaymentStatusModal = ({
         style: 'currency',
         currency: 'BRL'
       });
-      ctx.fillText(valorFormatado, 300, y);
+      ctx.fillText(valorFormatado, 320, y);
       y += 30;
     });
   
